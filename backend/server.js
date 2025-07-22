@@ -6,6 +6,9 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
+
+const PORT = process.env.PORT || 3001;
+
 const app = express();
 
 // 允許所有來源跨域 (可依需求修改為指定來源)
@@ -160,5 +163,7 @@ app.get('/api/seed-orgs', async (req, res) => {
 });
 
 // 10. 啟動伺服器 (3001 埠口)
-app.listen(3001, () => console.log('✅ 後端 API 運行於 http://localhost:3001'));
+
+app.listen(PORT, () => console.log(`伺服器啟動於埠口 ${PORT}`));
+
 
