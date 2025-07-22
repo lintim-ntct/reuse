@@ -1,0 +1,8 @@
+# 不要追蹤環境變數設定檔
+.env
+
+# 不要追蹤 node_modules 依賴資料夾
+node_modules/
+
+# 日誌檔
+*.log

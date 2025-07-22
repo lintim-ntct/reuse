@@ -1,5 +1,7 @@
 // backend/server.js
 
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -15,9 +17,16 @@ app.use(cors({
 app.use(express.json());
 
 // 1. 連線 MongoDB
+/*
 mongoose.connect('mongodb://localhost:27017/agriwaste', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB 連線成功'))
   .catch(err => console.error('MongoDB 連線失敗：', err));
+*/
+
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB 連線成功'))
+  .catch(err => console.error('MongoDB 連線失敗：', err));
+
 
 // 2. 定義報告 Schema 與 Model
 const reportSchema = new mongoose.Schema({
