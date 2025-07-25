@@ -1,11 +1,8 @@
-// backend/server.js
-
 require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
 
 const PORT = process.env.PORT || 3001;
 
@@ -20,16 +17,9 @@ app.use(cors({
 app.use(express.json());
 
 // 1. 連線 MongoDB
-/*
-mongoose.connect('mongodb://localhost:27017/agriwaste', { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB 連線成功'))
-  .catch(err => console.error('MongoDB 連線失敗：', err));
-*/
-
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB 連線成功'))
   .catch(err => console.error('MongoDB 連線失敗：', err));
-
 
 // 2. 定義報告 Schema 與 Model
 const reportSchema = new mongoose.Schema({
@@ -40,7 +30,6 @@ const reportSchema = new mongoose.Schema({
   phone: String,
   time: { type: Date, default: Date.now }
 });
-
 const Report = mongoose.model('Report', reportSchema);
 
 // 3. 定義機構 Schema 與 Model，包含地理座標欄位(location)
@@ -79,14 +68,41 @@ app.get('/api/reports', async (req, res) => {
   res.json(reports);
 });
 
+// 新增：取得所有農業廢棄物類型列表（去重）/api/types
+app.get('/api/types', async (req, res) => {
+  try {
+    const types = await Organization.distinct('type');
+    res.json(types);
+  } catch (err) {
+    console.error('取得類型失敗:', err);
+    res.status(500).json({ message: '取得農業廢棄物類型失敗' });
+  }
+});
+
+// 新增：取得所有城市列表（去重）/api/cities
+app.get('/api/cities', async (req, res) => {
+  try {
+    const cities = await Organization.distinct('city');
+    res.json(cities);
+  } catch (err) {
+    console.error('取得城市失敗:', err);
+    res.status(500).json({ message: '取得城市列表失敗' });
+  }
+});
+
 // 6. 查詢機構（支援類型及城市篩選），GET /api/orgs
 app.get('/api/orgs', async (req, res) => {
   const { type, city } = req.query;
   const filter = {};
   if (type) filter.type = type;
   if (city) filter.city = city;
-  const orgs = await Organization.find(filter);
-  res.json(orgs);
+  try {
+    const orgs = await Organization.find(filter);
+    res.json(orgs);
+  } catch (err) {
+    console.error('查詢業者失敗:', err);
+    res.status(500).json({ message: '查詢業者失敗' });
+  }
 });
 
 // 7. 新增含經緯度的機構資料：POST /api/org
@@ -141,29 +157,31 @@ app.get('/api/match', async (req, res) => {
 
 // 9. 批次匯入示範業者資料(含經緯度)：GET /api/seed-orgs
 app.get('/api/seed-orgs', async (req, res) => {
-  await Organization.create([
-    {
-      name: "中興資源中心",
-      type: "稻草",
-      city: "南投市",
-      phone: "049-2563472",
-      address: "南投市中正路1號",
-      location: { type: "Point", coordinates: [120.6845, 23.8385] }
-    },
-    {
-      name: "示範再生工坊",
-      type: "菇包",
-      city: "南投市",
-      phone: "049-1111222",
-      address: "南投市測試路22號",
-      location: { type: "Point", coordinates: [120.6623, 23.8299] }
-    }
-  ]);
-  res.json({ message: "已匯入初始業者資料" });
+  try {
+    await Organization.create([
+      {
+        name: "中興資源中心",
+        type: "稻草",
+        city: "南投市",
+        phone: "049-2563472",
+        address: "南投市中正路1號",
+        location: { type: "Point", coordinates: [120.6845, 23.8385] }
+      },
+      {
+        name: "示範再生工坊",
+        type: "菇包",
+        city: "南投市",
+        phone: "049-1111222",
+        address: "南投市測試路22號",
+        location: { type: "Point", coordinates: [120.6623, 23.8299] }
+      }
+    ]);
+    res.json({ message: "已匯入初始業者資料" });
+  } catch (err) {
+    console.error('匯入示範資料失敗:', err);
+    res.status(500).json({ message: '匯入示範資料失敗' });
+  }
 });
 
-// 10. 啟動伺服器 (3001 埠口)
-
+// 10. 啟動伺服器
 app.listen(PORT, () => console.log(`伺服器啟動於埠口 ${PORT}`));
-
-
